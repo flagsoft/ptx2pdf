@@ -1002,7 +1002,16 @@
 \newif\ifrotateVerse \rotateVersefalse
 \newif\ifversehyphen \versehyphentrue
 \newif\ifversehyphenup \versehyphenupfalse
+\newcount\fastendchapter \fastendchapter=0
 \def\everyfirstverse#1#2#3{}% Arguments are book ID (e.g. GEN), Book name (e.g. Genesis) and chapter
+
+\def\STOPHERE{
+  \ifdiglot
+    \x@\global\x@\let\x@\afterthischunkhook\csname endinput\endcsname
+  \else
+    \csname endinput\endcsname
+  \fi
+}
 \def\@ddcvhooks{
  % called after \c and \v have been processed in stylesheet at beginning of typesetting file
  \let\@V=\v% remember \v defn for (A) below
@@ -1114,6 +1123,15 @@
    \fi
    \gdef\ch@pter{##1}% remember chapter number
    \gdef\ch@ptert@xt{##1}% the chapter number we will actually output
+   \ifnum \fastendchapter=0 \else 
+     \edef\tmpa{\the\fastendchapter}
+     \ifx\ch@pter\tmpa
+       \message{fastendchapter matched: ##1}%
+       \STOPHERE
+     \else
+       %\message{##1 != \the\fastendchapter}
+     \fi
+   \fi
    \global\let\ch@pteraltt@xt\empty
    \gdef\v@rse{}% clear verse number
    \m@kedigitsletters %Must reset this before futurelet grabs anything
