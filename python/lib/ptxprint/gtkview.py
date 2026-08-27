@@ -61,7 +61,7 @@ from ptxprint.wizards.cover.coverwizard import CoverWizardApp
 from ptxprint.wizards.configuration import launchWizard
 
 import ptxprint.scriptsnippets as scriptsnippets
-import configparser, logging, threading
+import configparser, logging, threading, time
 import webbrowser
 import unicodedata
 from threading import Thread
@@ -2237,7 +2237,7 @@ class GtkViewModel(ViewModel):
             self.testing.finalise()
         mprint = getattr(self, 'mprint', None)
         if mprint is not None:
-            mprint.teardown()
+            mprint.terminate()
         logger.debug(f"Main width={self.mainapp.win.get_size().width}")
         self.builder.get_object("mainapp_win").destroy()
         self.mainapp.quit()
@@ -8314,7 +8314,7 @@ Thank you,
         args.restart = resume
         tout = float(self.get("s_pbtimeout")) * 60
         if tout < 1:
-            tout = float(self.get("s_maxfilltime")) * 60
+            tout = None
         build_params = BuildParams(
                 prjtree = self.prjTree,
                 config = self.userconfig,
@@ -8329,6 +8329,7 @@ Thank you,
                 loglevel = int(getattr(logging, args.logging.upper(), args.logging)) if args.logging else None)
         bks = self.getBooks()
         self.mprint.submit_fill_jobs(bks, build_params, stop=False)
+        self.mprint.start_clock()
         # Poll for progress events every 100 ms — simpler and more reliable
         # on Windows than io_add_watch + socketpair.
         if getattr(self, '_progress_watch_id', None) is not None:
@@ -8351,13 +8352,15 @@ Thank you,
         if q is None:
             self._progress_watch_id = None
             return GLib.SOURCE_REMOVE
+        usage = mprint.sample_usage()
+        elapsed = time.time() - mprint.time
         try:
             while True:
                 event = q.get_nowait()
                 if event is not None:
-                    self._fill_progress(event)
+                    self._fill_progress(event, usage=usage, elapsed=int(elapsed))
         except queue.Empty:
-            pass
+            self._fill_progress(None, usage=usage, elapsed=int(elapsed))
 
         if mprint.is_finished():
             self._progress_watch_id = None
@@ -8375,11 +8378,12 @@ Thank you,
     def onFillCancelled(self):
         if self.mprint is not None:
             self.mprint.cancel()
+            GLib.timeout_add(10000, self.mprint.terminate)
 
-    def _fill_progress(self, event):
+    def _fill_progress(self, event, usage=0., elapsed=0.):
         if self.bkProgressDlg is None:
             return
-        self.bkProgressDlg.updateEvent(event)
+        self.bkProgressDlg.updateEvent(event, usage=usage, elapsed=elapsed)
 
     def onProgressMonitorToggle(self, widget, *a):
         if self.bkProgressDlg is None:
@@ -8395,7 +8399,6 @@ Thank you,
         launchWizard(self, parentWindow=self.builder.get_object("mainapp_win"),
              projectDir=self.project.path, configName=self.cfgid,
              ptxprintVersion=VersionStr, onApply=lambda _: self.saveConfig())
-
 
     def onStartTestRecording(self, btn):
         if self.args.capture:

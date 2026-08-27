@@ -283,11 +283,8 @@ texpertOptions = {
                             _("Minimum overlap in ems required for two spaces above each other to be considered part of the same river")),
 
     "pbtimeout":          O("pbtimeout", "APF", (100, 0, 1000, 1, 10, 0), None, _("Page fill timeout (mins)"), _("Cancel page filler books that take longer than this many minutes")),
-    "pbJustification":    O("pbjustify", "APF", (20, 0, 200, 1, 10, 0), None, _("Page fill justified text cost"), _("Factor to multiply stretching a justified paragraph over a non-justified")),
-    "pbSpacingTol":       O("pbspacingtol", "APF", (20, 0, 200, 1, 10, 0), None, _("Page fill expansion cost"), _("Weighting of badness caused by expansion")),
-    "pbShrinkPref":       O("pbshrinkpref", "APF", (20, 0, 200, 1, 10, 0), None, _("Page fill longer paragraph cost"), _("Extra cost for making paragraphs longer")),
-    "pbHeadings":         O("pbheadings", "APF", (60, 0, 200, 1, 10, 0), None, _("Page fill heading cost"), _("Factor to pay for adjusting a heading")),
-    "pbLastLine":         O("pblastline", "APF", (20, 0, 200, 1, 10, 0), None, _("Page fill last line effect weight"), _("Weighting of last line length effect costs")),
+    "pbSpacingTol":       O("pbspacingtol", "APF", (1.0, 0, 10, 0.1, 1, 1), None, _("Page fill bad spacing threshold factor"), _("The spacing badness: white/(black + white) my increase up to the default + k * default^4")),
+    "pbExpandBadness":    O("pbexpbad", "APF", (1.0, 0, 10, 0.1, 1, 1), None, _("Expansion badness cost"), _("Factor to multiply sqrt(abs(1-expand)) * badness^4 as added cost")),
 
     "TOCthreetab":        O("tocthreetab", "OTH", True, None, _("Use \\toc3 for Tab Text"),
                             _("Use \\toc3 for tab text if no \\zthumbtab")),
