@@ -1283,7 +1283,7 @@ class PTXFiller:
 
     def analyse_bw(self, testfn, page):
         xdvname = self.job.outfname.replace(".tex", ".xdv")
-        xdv = XdvSpaceMeasure(xdvname, self.parlocs, testfn=testfn, page=max(page+1, 0))
+        xdv = XdvSpaceMeasure(xdvname, self.parlocs, testfn=testfn, page=max(page, 0))
         for (opcode, data) in xdv.parse():
             pass
         

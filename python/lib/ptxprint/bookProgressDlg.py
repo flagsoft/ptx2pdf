@@ -275,6 +275,7 @@ class BookProgressDialog:
             self.grid.attach(cell.frame, col, row, 1, 1)
             self._cells[bk] = cell
 
+        logging.log(16, f"populate with {len(self._cells)} cells")
         self.stop_button.set_sensitive(stop_sensitive)
         self.stop_button.set_label(stoplabel)
         self.grid.show_all()

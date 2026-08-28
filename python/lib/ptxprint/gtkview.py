@@ -8304,11 +8304,10 @@ Thank you,
         mprint = getattr(self, 'mprint', None)
         if mprint is not None:
             self.mprint.terminate()
-        else:
-            numproc = int(self.get("s_maxproc"))
-            if numproc == 0:
-                numproc = 1
-            self.mprint = MultiPrint(numproc=numproc, progress=True)
+        numproc = int(self.get("s_maxproc"))
+        if numproc == 0:
+            numproc = 1
+        self.mprint = MultiPrint(numproc=numproc, progress=True)
 
         args = argparse.Namespace(**vars(self.args))
         args.restart = resume

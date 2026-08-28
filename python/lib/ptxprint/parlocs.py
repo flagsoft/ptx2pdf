@@ -487,7 +487,6 @@ class Paragraphs(list):
             if not len(self.pheights):
                 return (None, None, None)
             y = (self.pheights[pnum-1] if pnum > 0 and pnum <= len(self.pheights) else self.pheights[-1]) - y
-            logging.log(15, f"{pnum}: ({x}, {y})")
         rects = self._getRectsPage(pnum)
         if not rects:
             return (None, None, None)

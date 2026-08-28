@@ -370,31 +370,25 @@ class MultiPrint:
             self.progress_q = None
 
     def terminate(self):
-            """
-            Hard stop: Forcefully terminates all worker processes immediately,
-            cancels remaining futures, and cleans up queues.
-            """
-            # 1. Signal workers via cancellation flag
-            if self.cancel_event is not None:
-                self.cancel_event.value = True
+        """
+        Hard stop: Forcefully terminates all worker processes immediately,
+        cancels remaining futures, and cleans up queues.
+        """
+        if self.cancel_event is not None:
+            self.cancel_event.value = True
 
-            # 2. Force-kill underlying worker processes
-            if self.executor is not None:
-                # Reaches into internal pool to terminate active processes directly
-                processes = getattr(self.executor, '_processes', {})
-                for pid, process in list(processes.items()):
-                    if process.is_alive():
-                        process.terminate()  # Sends SIGTERM to kill worker immediately
+        if self.executor is not None:
+            processes = getattr(self.executor, '_processes', {})
+            for pid, process in list(processes.items()):
+                if process.is_alive():
+                    process.terminate()  # Sends SIGTERM to kill worker immediately
+            self.executor.shutdown(wait=False, cancel_futures=True)
+            self.executor = None
 
-                # 3. Shutdown executor and cancel queued futures
-                self.executor.shutdown(wait=False, cancel_futures=True)
-                self.executor = None
-
-            # 4. Wipe pending state and close queues
-            self.pending_futures.clear()
-            if self.progress_q:
-                try:
-                    self.progress_q.close()
-                except Exception:
-                    pass
-                self.progress_q = None
+        self.pending_futures.clear()
+        if self.progress_q:
+            try:
+                self.progress_q.close()
+            except Exception:
+                pass
+            self.progress_q = None

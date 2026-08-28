@@ -34,7 +34,7 @@ class XdvSpaceMeasure(XDViPositionedReader):
         else:
             res = super().xglyphs(opcode, parm, data)
         oy = self.liney
-        if 0 > self.liney - self.v > 50:        # jump back a long way or only forward
+        if self.liney - self.v < 0 or self.liney - self.v > 50:        # jump back a long way or only forward
             self.liney = self.v
         self.currect = r
         return res
