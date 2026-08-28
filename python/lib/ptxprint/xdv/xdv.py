@@ -2,6 +2,8 @@
 
 # Parses xdv
 from struct import unpack, pack
+import logging
+
 class Font:
     def __init__(self, fname):
         self.name = fname
@@ -165,6 +167,7 @@ class XDViReader:
                 break
             spage -= 1
             lastbop = data[10]
+        logging.log(15, f"{self.fname}: {self.fpos=}")
 
     def out(self, txt):
         # print(("pg[{}] ".format(self.pageno) + txt).encode("utf-8"))

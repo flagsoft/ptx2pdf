@@ -355,10 +355,8 @@ class TypesetterSolver:
         self.numpages = state.numPages()
         if self.numpages <= 2 * self.lookahead:
             npages = self.numpages - page + 1
-            self.noprobe = True
         else:
             npages = self.lookahead
-            self.noprobe = False
         try:
             layout = self.initial_probes(state, page, npages, restart=restart)
         except TimeoutError:
@@ -641,6 +639,8 @@ class TypesetterSolver:
                     if pri > mpri:
                         mpri = pri
             if mpri == 0:
+                if self.numpages <= 2 * self.lookahead or page + npages >= self.numpages:
+                    self.noprobe = True
                 npages = 2      # need to look ahead ready for the next page to process
             logger.log(15, f"{page}+{npages}, probing={not self.noprobe}, {logmodpids=}, {mpri=}")
             # logger.log(15, "BASE %s", {p:v for p,v in self.base_params.items() if v!=(1.0,0)})
@@ -684,8 +684,9 @@ class TypesetterSolver:
                 whites = sum(r.white for r in par.rects)
             else:
                 (blacks, whites) = (0, 0)
-            whiteness = whites / (blacks + whites + 1)
+            whiteness = whites / (blacks + whites + .01)
             badness = self.badness_modify(p, e, s, whiteness, isbase=isbase)
+            logging.log(15, f"{p}: ({e}, {s}) {whiteness=:.5f} {badness=:.5f} {whites=} {blacks=}")
             if (p, 0) not in self.shape_cache:
                 self.shape_cache[(p,0)] = (self.expand, 0, whiteness)
                 self.probe_cache.setdefault(p, {})[(self.expand, 0)] = 0
@@ -704,8 +705,9 @@ class TypesetterSolver:
             sc = self.shape_cache.get(key, None)
             if not isbase:
                 base_whiteness = self.shape_cache[(p, 0)][2]
-                threshold = base_whiteness + self.hooks.badness_spacing_tolerance * base_whiteness ** 4
+                threshold = base_whiteness + (self.hooks.badness_spacing_tolerance * base_whiteness) ** 4
                 if whiteness > threshold:
+                    logging.log(15, f"{p} ({e}, {s}) {whiteness=} {threshold=} {base_whiteness=}")
                     continue
             d = self.badness_cmp((e, s, badness), sc)
             if d < 0:
@@ -1144,7 +1146,11 @@ class PTXFiller:
         s = m.group(1)
         if s.startswith("k."):
             s = "k." + re.sub(r"[^a-zA-Z0-9]", "", s[2:])
-        return (refSort(s), int(m.group(2) or 0))
+        try:
+            c = int(m.group(2) or 0)
+        except ValueError:
+            c = 0
+        return (refSort(s), c)
 
     def get_plines(self):
         plines = {p.pid(): p.lines for p in self.parlocs if isinstance(p, ParInfo)}
@@ -1277,7 +1283,7 @@ class PTXFiller:
 
     def analyse_bw(self, testfn, page):
         xdvname = self.job.outfname.replace(".tex", ".xdv")
-        xdv = XdvSpaceMeasure(xdvname, self.parlocs, testfn=testfn, page=page)
+        xdv = XdvSpaceMeasure(xdvname, self.parlocs, testfn=testfn, page=max(page+1, 0))
         for (opcode, data) in xdv.parse():
             pass
         

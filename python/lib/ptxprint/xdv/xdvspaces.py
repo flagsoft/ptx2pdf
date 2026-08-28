@@ -1,5 +1,6 @@
 
 from ptxprint.xdv.xdv import XDViPositionedReader
+import logging
 
 class XdvSpaceMeasure(XDViPositionedReader):
 
@@ -11,9 +12,11 @@ class XdvSpaceMeasure(XDViPositionedReader):
         self.textend = 0.
         self.currect = None
         self.pindex = page
+        logging.log(15, "Init new xdvspace")
 
     def bop(self, opcode, parm, data):
         self.pindex += 1
+        logging.log(15, f"New page {self.pindex}")
         return super().bop(opcode, parm, data)
 
     def xglyphs(self, opcode, parm, data):
@@ -30,7 +33,11 @@ class XdvSpaceMeasure(XDViPositionedReader):
             r.black += self.h - bstart
         else:
             res = super().xglyphs(opcode, parm, data)
-        self.liney = self.v
+        oy = self.liney
+        if 0 > self.liney - self.v > 50:        # jump back a long way or only forward
+            self.liney = self.v
+        if p is not None:
+            logging.log(15, f"{p.pid()} {oy=} {self.liney=} {self.v=}")
         self.currect = r
         return res
 
