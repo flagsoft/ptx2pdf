@@ -8352,15 +8352,15 @@ Thank you,
         if q is None:
             self._progress_watch_id = None
             return GLib.SOURCE_REMOVE
-        usage = mprint.sample_usage()
+        usage = int(mprint.sample_usage())
         elapsed = time.time() - mprint.time
         try:
             while True:
                 event = q.get_nowait()
                 if event is not None:
-                    self._fill_progress(event, usage=usage, elapsed=int(elapsed))
+                    self._fill_progress(event, usage=usage, elapsed=elapsed)
         except queue.Empty:
-            self._fill_progress(None, usage=usage, elapsed=int(elapsed))
+            self._fill_progress(None, usage=usage, elapsed=elapsed)
 
         if mprint.is_finished():
             self._progress_watch_id = None

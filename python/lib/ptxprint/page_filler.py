@@ -179,7 +179,8 @@ class Hooks:
         self.printer = printer
         self.basestate = state
         for a in (("spacing_tolerance", "pbspacingtol"),
-                  ("expansion_factor", "pbexpbad")):
+                  ("expansion_factor", "pbexpbad"),
+                  ("expansion_cost", "pbexpcost")):
             val = float(printer.view.get("s_"+a[1]))
             logger.debug(f"{a}, {val}")
             setattr(self, "badness_"+a[0], val)
@@ -831,8 +832,9 @@ class TypesetterSolver:
     def badness_modify(self, p, e, s, badness, isbase=False):
         exp = math.sqrt(abs(self.expand - e))
         badness += self.hooks.badness_expansion_factor * exp * (badness ** 4)
-        if exp > 1.:
-            badness += 1.0
+        expxtra = exp * self.hooks.badness_expansion_cost
+        if expxtra > 0.:
+            badness += expxtra
         is_header = self.hooks.is_header(p)
         if not isbase and is_header:
             badness += 10

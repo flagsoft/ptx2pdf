@@ -138,10 +138,10 @@ class BookProgressCell:
             if not self._total:
                 self._applyColor(STATUS_SKIPPED)
             elif self._hadBadPage:
-                self._bar.set_text(self._barStatusText(_("Complete")))
+                self._bar.set_text(self._barStatusText(event.msg))
                 self._applyColor(STATUS_WARNING)
             else:
-                self._bar.set_text(self._barStatusText(event.msg))
+                self._bar.set_text(self._barStatusText(_("Complete")))
                 self._applyColor(STATUS_GOOD)
 
         elif mode == "failed":
