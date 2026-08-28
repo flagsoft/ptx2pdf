@@ -180,7 +180,8 @@ class Hooks:
         self.basestate = state
         for a in (("spacing_tolerance", "pbspacingtol"),
                   ("expansion_factor", "pbexpbad"),
-                  ("expansion_cost", "pbexpcost")):
+                  ("expansion_cost", "pbexpcost"),
+                  ("contrast_factor", "pbcontrast")):
             val = float(printer.view.get("s_"+a[1]))
             logger.debug(f"{a}, {val}")
             setattr(self, "badness_"+a[0], val)
@@ -238,6 +239,9 @@ class Hooks:
         i = bisect(self.chapters, pnum)
         logging.log(15, f"page={pnum}, chapter={i}")
         return i
+
+    def get_previous(self, pid, page=None):
+        return self.printer.get_previous(pid, page=page)
 
     @property
     def cancelled(self):
@@ -757,7 +761,7 @@ class TypesetterSolver:
                 count += 1
                 delta_lists = sorted(by_para[p] for p in pars)
                 for choice in itertools.product(*delta_lists):
-                    score = sum(s for s, _ in choice) + 5 * len(choice)
+                    score = sum(s for s, _ in choice) + 0.1 * len(choice)
                     combo = {p: d for p, (s, d) in zip(pars, choice)}
                     # have we done the same net col line change before?
                     col_deltas = [0, 0, 0, 0, 0, 0]
@@ -783,6 +787,10 @@ class TypesetterSolver:
                         else:
                             logger.log(12, "Can't find mask for {p}")
                             col_deltas[5] += d
+                        prev = self.hooks.get_previous(p)
+                        preve = self.shape_cache.get((p, combo.get(p, 0)), (self.expand, 0))[0]
+                        pe = self.shape_cache[(p, d)][0]
+                        score += self.hooks.badness_contrast_factor * abs(pe - preve)
                     else:
                         if collengths[0] > 0 and 0 <= col_deltas[0] + col_deltas[1] + col_deltas[3] < collengths[0]:
                             logger.log(12, f"Rejecting against col 1 {col_deltas} {combo}")
@@ -1151,6 +1159,22 @@ class PTXFiller:
             return self.parlocs[pindex]
         return None
 
+    def get_previous(self, pid, page=None):
+        pindex = self.pidmap.get(pid)
+        if pindex is None:
+            return None
+        while pindex > 0:
+            pindex -= 1
+            p = self.parlocs[pindex]
+            if isinstance(p, ParInfo):
+                if page is None:
+                    return p.pid()
+                elif page in self.pidmap[p.pid()]:
+                    return p.pid()
+                else:
+                    return None
+        return None
+
     def get_paragraph_start_page(self, pid):
         p = self.get_para(pid)
         if p is None:
@@ -1167,10 +1191,11 @@ class PTXFiller:
         p = self.get_para(pid)
         if p is None:
             return 0
+        res = 0
         for r in p.rects:
             if r.pagenum == page + 1:
-                return r.lines
-        return 0
+                res += r.lines
+        return res
 
     def isheader_column_start(self, pid):
         pi = self.get_para_ind(pid)
