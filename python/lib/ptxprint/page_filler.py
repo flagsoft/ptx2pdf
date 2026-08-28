@@ -1033,7 +1033,7 @@ class PTXFiller:
         logger.log(12, f"{self.bk}: {parparms=}")
         for s, p in parparms.items():
             key, para = mkkey(s)
-            c, _ = key.split('.', 1)
+            c, _ = key.split('.', 1) if '.' in key else key
             if lastchap == 0 or lastchap > int(c):
                 self.adjs.setval(self.bk, key, para, p[1], None, expand=int(p[0]*100), append=True)
         if solver is not None:

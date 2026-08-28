@@ -36,8 +36,6 @@ class XdvSpaceMeasure(XDViPositionedReader):
         oy = self.liney
         if 0 > self.liney - self.v > 50:        # jump back a long way or only forward
             self.liney = self.v
-        if p is not None:
-            logging.log(15, f"{p.pid()} {oy=} {self.liney=} {self.v=}")
         self.currect = r
         return res
 
