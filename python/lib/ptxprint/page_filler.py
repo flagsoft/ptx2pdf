@@ -763,7 +763,7 @@ class TypesetterSolver:
                 count += 1
                 delta_lists = sorted(by_para[p] for p in pars)
                 for choice in itertools.product(*delta_lists):
-                    score = sum(s for s, _ in choice) + 0.1 * len(choice)
+                    score = sum(s for s, _d in choice) + 0.1 * len(choice)
                     combo = {p: d for p, (s, d) in zip(pars, choice)}
                     # have we done the same net col line change before?
                     col_deltas = [0, 0, 0, 0, 0, 0]
@@ -1023,6 +1023,13 @@ class PTXFiller:
             (r, para) = self.pidkey(s)
             key = f"{r[5]}" if r[1] == 0 and r[5] else f"{r[1]}.{r[2]}{r[5]}"
             return key, para
+        def getchap(key):
+            c, _d = key.split('.', 1) if '.' in key else (key, None)
+            try:
+                c = int(c)
+            except ValueError:
+                c = 0
+            return c
         tname = self.view.getLocalTriggerFilename(self.bk)
         fname = self.view.getAdjListFilename(self.bk)
         adjfname = os.path.join(self.view.project.srcPath(self.view.cfgid), "AdjLists", fname)
@@ -1033,13 +1040,13 @@ class PTXFiller:
         logger.log(12, f"{self.bk}: {parparms=}")
         for s, p in parparms.items():
             key, para = mkkey(s)
-            c, _ = key.split('.', 1) if '.' in key else key
+            c = getchap(key)
             if lastchap == 0 or lastchap > int(c):
                 self.adjs.setval(self.bk, key, para, p[1], None, expand=int(p[0]*100), append=True)
         if solver is not None:
             for s in solver.paragraph_order:
                 key, para = mkkey(s)
-                c, _ = key.split('.', 1)
+                c = getchap(key)
                 if lastchap != 0 and lastchap <= int(c):
                     break
                 for a in range(-2, 3):
