@@ -331,7 +331,10 @@ class Paragraphs(list):
                 if len(p) == 5:
                     p.insert(0, "")
                 logger.log(5, f"Starting para {p[0]}")
-                chap = int(self.chapre.sub(r"\1", p[0]))
+                try:
+                    chap = int(self.chapre.sub(r"\1", p[0]))
+                except ValueError:
+                    chap = 0
                 if len(self.chapters) <= chap:
                     self.chapters.extend([self.chapters[-1]]*(chap - len(self.chapters)))
                     self.chapters.append(pnum)
